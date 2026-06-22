@@ -1,0 +1,35 @@
+name: Daily Deals Search
+
+on:
+  schedule:
+    # 每天早上 10:00（北京时间），GitHub Actions 使用 UTC
+    # 北京时间 10:00 = UTC 02:00
+    - cron: '0 2 * * *'
+  workflow_dispatch:
+
+jobs:
+  search:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        run: pip install openai
+
+      - name: Run search script
+        env:
+          DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
+        run: python search_deals.py
+
+      - name: Commit and push
+        run: |
+          git config user.name "daily-deals-bot"
+          git config user.email "bot@localhost"
+          git add daily-deals/
+          git diff --staged --quiet || git commit -m "chore: add deals for $(date +'%Y-%m-%d')"
+          git push
